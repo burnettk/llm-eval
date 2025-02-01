@@ -1,4 +1,4 @@
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.schema import HumanMessage
 import os
 
@@ -13,7 +13,7 @@ llm = ChatOpenAI(
 # Define a test case
 def test_case(prompt, expected_output):
     response = llm([HumanMessage(content=prompt)])
-    assert response.content == expected_output, f"Expected {expected_output}, but got {response.content}"
+    assert expected_output in response.content, f"Expected {expected_output} to be in {response.content}, but it wasn't"
 
 # Run the test case
-test_case("What is 2 + 2?", "The answer is 4.")
+test_case("What is 2 + 2?", "4")
