@@ -1,16 +1,11 @@
 <prompt>
-    <name>Script Edit</name>
-    <description>Edit a script according to the specified operation</description>
-    <instruction operation="{operation}">Edit the script as follows:</instruction>
-    <operations>
-        <overwrite>
-            <template>Overwrite the existing code with: {new_code}</template>
-        </overwrite>
-        <modify>
-            <template>Edit the script to change the value of test_var to: {new_value}</template>
-        </modify>
-        <append>
-            <template>Edit the script to append the following line at the end: {new_code}</template>
-        </append>
-    </operations>
+    <purpose>You are going to return python code, given an original block of code and a user_message that may edit it, including potentially replacing it entirely or appending to it, based on the user_message instructions.</purpose>
+    <description>Edit a script according to the specified instructions</description>
+    <instructions>
+      <instruction>Return only python code, no other explanation or text.</instruction>
+      <instruction>If in doubt, keep the original_code.</instruction>
+      <instruction>Edit the following script according to the user's instructions:</instruction>
+    </instructions>
+    <original_code>{script_content}</original_code>
+    <user_message>{user_message}</user_message>
 </prompt>
