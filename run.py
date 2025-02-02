@@ -8,6 +8,45 @@ import argparse
 import importlib.util
 import sys
 
+def get_placeholders_from_template(template):
+    """Extract placeholders from a prompt template string"""
+    placeholders = set()
+    # Split on curly braces and look for variable names
+    parts = template.split('{')
+    for part in parts:
+        if '}' in part:
+            placeholder = part.split('}')[0].strip()
+            if placeholder:
+                placeholders.add(placeholder)
+    return placeholders
+
+def run_eval(eval_dir, llm):
+    """Run evaluation for a specific directory"""
+    eval_path = Path(f"evals/{eval_dir}")
+    
+    # Load prompt configuration
+    with open(eval_path / "prompt.yaml") as f:
+        prompt_config = yaml.safe_load(f)
+    
+    # Load placeholders
+    with open(eval_path / "placeholders.json") as f:
+        placeholders = json.load(f)
+    
+    # Validate placeholders
+    expected_placeholders = get_placeholders_from_template(prompt_config["prompt_template"])
+    missing = expected_placeholders - set(placeholders.keys())
+    if missing:
+        raise ValueError(f"Missing required placeholders in {eval_dir}: {', '.join(missing)}")
+    
+    # Run the test
+    prompt = ChatPromptTemplate.from_template(prompt_config["prompt_template"])
+    response = llm.invoke(prompt.format_messages(**placeholders))
+    
+    assert prompt_config["expected_output"].strip() in response.content.strip(), (
+        f"Expected '{prompt_config['expected_output']}' to be in '{response.content}', but it wasn't"
+    )
+    print(f"✅ {eval_dir} passed")
+
 # Add directory to Python path
 sys.path.append(str(Path(__file__).parent))
 
@@ -30,27 +69,6 @@ def get_model(model_name):
         )
     else:
         raise ValueError(f"Unsupported model: {model_name}")
-
-def run_eval(eval_dir, llm):
-    """Run evaluation for a specific directory"""
-    eval_path = Path(f"evals/{eval_dir}")
-    
-    # Load prompt configuration
-    with open(eval_path / "prompt.yaml") as f:
-        prompt_config = yaml.safe_load(f)
-    
-    # Load placeholders
-    with open(eval_path / "placeholders.json") as f:
-        placeholders = json.load(f)
-    
-    # Run the test
-    prompt = ChatPromptTemplate.from_template(prompt_config["prompt_template"])
-    response = llm.invoke(prompt.format_messages(**placeholders))
-    
-    assert prompt_config["expected_output"].strip() in response.content.strip(), (
-        f"Expected '{prompt_config['expected_output']}' to be in '{response.content}', but it wasn't"
-    )
-    print(f"✅ {eval_dir} passed")
 
 def execute_script(script_path):
     """Execute a script and return the module"""
