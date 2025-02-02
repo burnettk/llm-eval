@@ -1,2 +1,1 @@
 prompt_path: shared_prompts/script_edit.xml
-operation: modify
