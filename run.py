@@ -10,13 +10,6 @@ llm = ChatOpenAI(
     base_url="https://openrouter.ai/api/v1"
 )
 
-# # Create a prompt template
-# prompt = ChatPromptTemplate.from_template("What is 2 + 2?")
-#
-# # Generate a response
-# response = llm(prompt.format_messages())
-# printm(response.content)
-
 # Define a test case
 def test_case(prompt_string, expected_output):
     prompt = ChatPromptTemplate.from_template(prompt_string)
