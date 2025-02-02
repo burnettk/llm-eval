@@ -1,0 +1,8 @@
+operation: append
+prompt_template: |
+  Edit the script as follows:
+  
+  Edit the script to append the following line at the end: {new_code}
+expected_output: |
+  test_var = 1
+  test_var = 2
