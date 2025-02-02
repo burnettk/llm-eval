@@ -20,9 +20,8 @@ llm = ChatOpenAI(
 # Define a test case
 def test_case(prompt_string, expected_output):
     prompt = ChatPromptTemplate.from_template(prompt_string)
-    response = llm(prompt.format_messages())
+    response = llm.invoke(prompt.format_messages())
     assert expected_output in response.content, f"Expected {expected_output} to be in {response.content}, but it wasn't"
 
 # Run the test case
 test_case("What is 2 + 2?", "4")
-
