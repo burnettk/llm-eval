@@ -4,6 +4,11 @@ import os
 import json
 from pathlib import Path
 import argparse
+import importlib.util
+import sys
+
+# Add directory to Python path
+sys.path.append(str(Path(__file__).parent))
 
 # Initialize the LLM using OpenRouter
 api_key = os.environ['OPENROUTER_API_KEY']
@@ -50,6 +55,14 @@ def run_eval(eval_dir, llm):
     )
     print(f"✅ {eval_dir} passed")
 
+def execute_script(script_path):
+    """Execute a script and return the module"""
+    spec = importlib.util.spec_from_file_location("script_module", script_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Run evaluations with different models')
@@ -61,7 +74,7 @@ if __name__ == "__main__":
     llm = get_model(args.model)
     
     # Run all evaluations
-    for eval_dir in ["math", "translation"]:
+    for eval_dir in ["math", "translation", "script_edit_append", "script_edit_overwrite", "script_edit_modify"]:
         try:
             run_eval(eval_dir, llm)
         except AssertionError as e:
