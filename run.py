@@ -28,9 +28,8 @@ def run_eval(eval_dir, llm):
     with open(eval_path / "prompt.yaml") as f:
         prompt_config = yaml.safe_load(f)
     
-    # Load placeholders
-    with open(eval_path / "placeholders.json") as f:
-        placeholders = json.load(f)
+    # Extract placeholders from prompt.yaml
+    placeholders = {key: value for key, value in prompt_config.items() if key != "expected_output" and key != "prompt_path" and key != "prompt_template"}
     
     # Get prompt template from either prompt_path or prompt_template
     if "prompt_path" in prompt_config:
