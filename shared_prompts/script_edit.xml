@@ -1,0 +1,18 @@
+<prompt>
+    <name>Script Edit</name>
+    <description>Edit a script according to the specified operation</description>
+    <operations>
+        <overwrite>
+            <instruction>Overwrite the existing code with:</instruction>
+            <template>{new_code}</template>
+        </overwrite>
+        <modify>
+            <instruction>Edit the script to change the value of test_var to</instruction>
+            <template>{new_value}</template>
+        </modify>
+        <append>
+            <instruction>Edit the script to append the following line at the end:</instruction>
+            <template>{new_code}</template>
+        </append>
+    </operations>
+</prompt>

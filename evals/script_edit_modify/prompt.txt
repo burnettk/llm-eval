@@ -1,1 +1,2 @@
-Edit the script to change the value of test_var to {new_value}
+prompt_path: shared_prompts/script_edit.xml
+operation: modify

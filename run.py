@@ -34,9 +34,25 @@ def run_eval(eval_dir, llm):
     """Run evaluation for a specific directory"""
     eval_path = Path(f"evals/{eval_dir}")
     
-    # Load prompt template
+    # Load prompt configuration
     with open(eval_path / "prompt.txt") as f:
-        prompt_template = f.read().strip()
+        prompt_config = f.read().strip().splitlines()
+    
+    # Handle both direct prompts and XML prompts
+    if prompt_config[0].startswith("prompt_path:"):
+        # Load XML prompt
+        prompt_path = Path(prompt_config[0].split(": ")[1])
+        operation = prompt_config[1].split(": ")[1]
+        
+        from xml.etree import ElementTree as ET
+        xml_prompt = ET.parse(prompt_path)
+        instruction = xml_prompt.find(f".//{operation}/instruction").text
+        template = xml_prompt.find(f".//{operation}/template").text
+        
+        prompt_template = f"{instruction}\n{template}"
+    else:
+        # Handle legacy direct prompt
+        prompt_template = "\n".join(prompt_config)
     
     # Load placeholders
     with open(eval_path / "placeholders.json") as f:

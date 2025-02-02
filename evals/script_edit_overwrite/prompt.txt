@@ -1,2 +1,2 @@
-Edit the script to overwrite the existing code with:
-{new_code}
+prompt_path: shared_prompts/script_edit.xml
+operation: overwrite
