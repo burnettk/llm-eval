@@ -68,13 +68,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run evaluations with different models')
     parser.add_argument('--model', type=str, choices=['mythomax', 'deepseek'], 
                       default='mythomax', help='Model to use for evaluation')
+    parser.add_argument('--evals', nargs='*', default=[], 
+                      help='Specific evaluations to run (leave empty to run all)')
     args = parser.parse_args()
     
     # Initialize the LLM based on selected model
     llm = get_model(args.model)
     
-    # Run all evaluations
-    for eval_dir in ["math", "translation", "script_edit_append", "script_edit_overwrite", "script_edit_modify"]:
+    # Determine which evaluations to run
+    if args.evals:
+        eval_dirs = args.evals
+        print(f"Running specific evaluations: {', '.join(eval_dirs)}")
+    else:
+        eval_dirs = ["math", "translation", "script_edit_append", "script_edit_overwrite", "script_edit_modify"]
+        print("Running all evaluations")
+    
+    # Run the specified evaluations
+    for eval_dir in eval_dirs:
         try:
             run_eval(eval_dir, llm)
         except AssertionError as e:
