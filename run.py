@@ -49,11 +49,11 @@ def run_eval(eval_dir, llm):
         instruction = xml_prompt.find(f".//{operation}/instruction").text
         template = xml_prompt.find(f".//{operation}/template").text
         
-        prompt_template = f"{instruction}\n{template}"
+        # Replace placeholder in XML with the operation
+        prompt_template = xml_prompt.replace("{operation}", operation)
     else:
-        # Handle legacy direct prompt
         prompt_template = "\n".join(prompt_config)
-    
+
     # Load placeholders
     with open(eval_path / "placeholders.json") as f:
         placeholders = json.load(f)
