@@ -53,8 +53,12 @@ def run_eval(eval_dir, llm):
     print(f"➡️ ➡️ ➡️  prompt_with_filled_placeholders: {prompt_with_filled_placeholders}")
     response = llm.invoke(prompt_with_filled_placeholders)
     
-    assert prompt_config["expected_output"].strip() in response.content.strip(), (
-        f"Expected '{prompt_config['expected_output']}' to be in '{response.content}', but it wasn't"
+    # Strip whitespace before comparison
+    expected_output = prompt_config["expected_output"].strip()
+    response_content = response.content.strip()
+    
+    assert expected_output in response_content, (
+        f"Expected '{expected_output}' to be in '{response_content}', but it wasn't"
     )
     print(f"✅ {eval_dir} passed")
 
