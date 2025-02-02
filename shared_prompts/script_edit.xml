@@ -6,6 +6,6 @@
       <instruction>If in doubt, keep the original_code.</instruction>
       <instruction>Edit the following script according to the user's instructions:</instruction>
     </instructions>
-    <original_code>{script_content}</original_code>
+    <original_code>{original_code}</original_code>
     <user_message>{user_message}</user_message>
 </prompt>

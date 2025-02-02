@@ -1,4 +1,4 @@
 {
     "new_code": "test_var = 3",
-    "script_content": "test_var = 1"
+    "original_code": "test_var = 1"
 }
