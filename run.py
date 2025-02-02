@@ -40,7 +40,9 @@ def run_eval(eval_dir, llm):
     
     # Run the test
     prompt = ChatPromptTemplate.from_template(prompt_config["prompt_template"])
-    response = llm.invoke(prompt.format_messages(**placeholders))
+    prompt_with_filled_placeholders = prompt.format_messages(**placeholders)
+    print(f"➡️ ➡️ ➡️  prompt_with_filled_placeholders: {prompt_with_filled_placeholders}")
+    response = llm.invoke(prompt_with_filled_placeholders)
     
     assert prompt_config["expected_output"].strip() in response.content.strip(), (
         f"Expected '{prompt_config['expected_output']}' to be in '{response.content}', but it wasn't"
