@@ -32,14 +32,24 @@ def run_eval(eval_dir, llm):
     with open(eval_path / "placeholders.json") as f:
         placeholders = json.load(f)
     
+    # Get prompt template from either prompt_path or prompt_template
+    if "prompt_path" in prompt_config:
+        template_path = eval_path / prompt_config["prompt_path"]
+        with open(template_path) as f:
+            prompt_template = f.read().strip()
+    elif "prompt_template" in prompt_config:
+        prompt_template = prompt_config["prompt_template"]
+    else:
+        raise ValueError(f"Neither prompt_path nor prompt_template found in {eval_dir}/prompt.yaml")
+    
     # Validate placeholders
-    expected_placeholders = get_placeholders_from_template(prompt_config["prompt_template"])
+    expected_placeholders = get_placeholders_from_template(prompt_template)
     missing = expected_placeholders - set(placeholders.keys())
     if missing:
         raise ValueError(f"Missing required placeholders in {eval_dir}: {', '.join(missing)}")
     
     # Run the test
-    prompt = ChatPromptTemplate.from_template(prompt_config["prompt_template"])
+    prompt = ChatPromptTemplate.from_template(prompt_template)
     prompt_with_filled_placeholders = prompt.format_messages(**placeholders)
     print(f"➡️ ➡️ ➡️  prompt_with_filled_placeholders: {prompt_with_filled_placeholders}")
     response = llm.invoke(prompt_with_filled_placeholders)
