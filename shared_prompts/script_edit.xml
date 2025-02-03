@@ -3,7 +3,7 @@
     <description>Edit a script according to the specified instructions</description>
     <instructions>
       <instruction>Return only python code, no other explanation or text.</instruction>
-      <instruction>If in doubt, keep the original_code.</instruction>
+      <instruction>If in doubt, keep the original_code, and add new code to the end.</instruction>
       <instruction>Edit the following script according to the user's instructions:</instruction>
     </instructions>
     <original_code>{original_code}</original_code>
