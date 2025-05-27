@@ -7,6 +7,10 @@ from pathlib import Path
 import argparse
 import importlib.util
 import sys
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
 def get_placeholders_from_template(template):
     """Extract placeholders from a prompt template string"""
@@ -50,7 +54,7 @@ def run_eval(eval_dir, llm):
     # Run the test
     prompt = ChatPromptTemplate.from_template(prompt_template)
     prompt_with_filled_placeholders = prompt.format_messages(**placeholders)
-    print(f"➡️ ➡️ ➡️  prompt_with_filled_placeholders: {prompt_with_filled_placeholders}")
+    logging.debug(f"Prompt with filled placeholders: {prompt_with_filled_placeholders}")
     response = llm.invoke(prompt_with_filled_placeholders)
     
     # Strip whitespace before comparison
@@ -60,7 +64,7 @@ def run_eval(eval_dir, llm):
     assert expected_output in response_content, (
         f"Expected '{expected_output}' to be in '{response_content}', but it wasn't"
     )
-    print(f"✅ {eval_dir} passed")
+    logging.info(f"✅ {eval_dir} passed")
 
 # Add directory to Python path
 sys.path.append(str(Path(__file__).parent))
@@ -108,14 +112,15 @@ if __name__ == "__main__":
     # Determine which evaluations to run
     if args.evals:
         eval_dirs = args.evals
-        print(f"Running specific evaluations: {', '.join(eval_dirs)}")
+        logging.info(f"Running specific evaluations: {', '.join(eval_dirs)}")
     else:
         eval_dirs = ["math", "translation", "script_edit_append", "script_edit_overwrite", "script_edit_modify"]
-        print("Running all evaluations")
+        logging.info("Running all evaluations")
     
     # Run the specified evaluations
     for eval_dir in eval_dirs:
         try:
             run_eval(eval_dir, llm)
         except AssertionError as e:
-            print(f"❌ {eval_dir} failed: {str(e)}")
+            logging.error(f"❌ {eval_dir} failed: {str(e)}")
+
