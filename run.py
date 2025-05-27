@@ -102,7 +102,7 @@ def execute_script(script_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run evaluations with different models')
     parser.add_argument('--model', type=str,
-                      default='google/gemini-2.0-flash-exp:free', help='Model to use for evaluation')
+                      default='gemini/gemini-1.5-flash-8b-exp-0924', help='Model to use for evaluation')
     parser.add_argument('--evals', nargs='*', default=[], 
                       help='Specific evaluations to run (leave empty to run all)')
     parser.add_argument('--log-level', type=str, default='INFO',
