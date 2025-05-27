@@ -1,5 +1,4 @@
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from litellm import completion as litellm_completion
 import os
 import yaml
 import json
@@ -50,16 +49,23 @@ def run_eval(eval_dir, llm):
     missing = expected_placeholders - set(placeholders.keys())
     if missing:
         raise ValueError(f"Missing required placeholders in {eval_dir}: {', '.join(missing)}")
+
+    # Format the prompt content
+    formatted_content = prompt_template.format(**placeholders)
     
-    # Run the test
-    prompt = ChatPromptTemplate.from_template(prompt_template)
-    prompt_with_filled_placeholders = prompt.format_messages(**placeholders)
-    logger.debug(f"Prompt with filled placeholders: {prompt_with_filled_placeholders}")
-    response = llm.invoke(prompt_with_filled_placeholders)
+    # Prepare messages for LiteLLM
+    # Assuming all prompts are single user messages based on current structure
+    llm_messages = [{"role": "user", "content": formatted_content}]
+    logger.debug(f"Messages for LiteLLM: {llm_messages}")
+
+    # Run the test using LiteLLM
+    # The 'llm' variable (model_name string) is passed to LiteLLM.
+    response = litellm_completion(model=llm, messages=llm_messages)
     
     # Strip whitespace before comparison
     expected_output = prompt_config["expected_output"].strip()
-    response_content = response.content.strip()
+    # LiteLLM response structure: response.choices[0].message.content
+    response_content = response.choices[0].message.content.strip()
     
     assert expected_output in response_content, (
         f"Expected '{expected_output}' to be in '{response_content}', but it wasn't"
@@ -69,29 +75,23 @@ def run_eval(eval_dir, llm):
 # Add directory to Python path
 sys.path.append(str(Path(__file__).parent))
 
-# Initialize the LLM using OpenRouter
-api_key = os.environ['OPENROUTER_API_KEY']
+# Note: OPENROUTER_API_KEY should be set in the environment for LiteLLM to use OpenRouter.
 
 def get_model(model_name):
-    """Get the appropriate model configuration"""
+    """Get the appropriate model name for LiteLLM, ensuring OpenRouter prefix."""
+    # OPENROUTER_API_KEY environment variable is used by LiteLLM for OpenRouter.
     if model_name == "mythomax":
-        return ChatOpenAI(
-            model_name="gryphe/mythomax-l2-13b",
-            openai_api_key=api_key,
-            base_url="https://openrouter.ai/api/v1"
-        )
+        # Specific alias mapping
+        return "openrouter/gryphe/mythomax-l2-13b"
     elif model_name == "deepseek":
-        return ChatOpenAI(
-            model_name="deepseek/deepseek-r1-distill-qwen-32b",
-            openai_api_key=api_key,
-            base_url="https://openrouter.ai/api/v1"
-        )
+        # Specific alias mapping
+        return "openrouter/deepseek/deepseek-r1-distill-qwen-32b"
     else:
-        return ChatOpenAI(
-            model_name=model_name,
-            openai_api_key=api_key,
-            base_url="https://openrouter.ai/api/v1"
-        )
+        # For other models, ensure they are prefixed for OpenRouter
+        if model_name.startswith("openrouter/"):
+            return model_name
+        else:
+            return f"openrouter/{model_name}"
 
 def execute_script(script_path):
     """Execute a script and return the module"""
