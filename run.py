@@ -87,7 +87,11 @@ def get_model(model_name):
             base_url="https://openrouter.ai/api/v1"
         )
     else:
-        raise ValueError(f"Unsupported model: {model_name}")
+        return ChatOpenAI(
+            model_name=model_name,
+            openai_api_key=api_key,
+            base_url="https://openrouter.ai/api/v1"
+        )
 
 def execute_script(script_path):
     """Execute a script and return the module"""
@@ -100,8 +104,8 @@ def execute_script(script_path):
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Run evaluations with different models')
-    parser.add_argument('--model', type=str, choices=['mythomax', 'deepseek'], 
-                      default='mythomax', help='Model to use for evaluation')
+    parser.add_argument('--model', type=str,
+                      default='google/gemini-2.0-flash-exp:free', help='Model to use for evaluation')
     parser.add_argument('--evals', nargs='*', default=[], 
                       help='Specific evaluations to run (leave empty to run all)')
     parser.add_argument('--log-level', type=str, default='INFO',
