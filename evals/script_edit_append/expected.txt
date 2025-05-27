@@ -1,2 +1,0 @@
-test_var = 1
-test_var = 2
