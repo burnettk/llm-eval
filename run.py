@@ -1,3 +1,4 @@
+import litellm # Import the main litellm module
 from litellm import completion as litellm_completion
 import os
 import yaml
@@ -99,7 +100,6 @@ def execute_script(script_path):
     return module
 
 if __name__ == "__main__":
-    # Parse command line arguments
     parser = argparse.ArgumentParser(description='Run evaluations with different models')
     parser.add_argument('--model', type=str,
                       default='google/gemini-2.0-flash-exp:free', help='Model to use for evaluation')
@@ -110,7 +110,6 @@ if __name__ == "__main__":
                         help='Set the logging level (e.g., DEBUG, INFO)')
     args = parser.parse_args()
     
-    # Set the logging level based on the argument
     log_level_map = {
         'DEBUG': logging.DEBUG,
         'INFO': logging.INFO,
@@ -118,12 +117,13 @@ if __name__ == "__main__":
         'ERROR': logging.ERROR,
         'CRITICAL': logging.CRITICAL
     }
-    logging.basicConfig(level=log_level_map[args.log_level.upper()], format='%(levelname)s: %(message)s')
+    logging.basicConfig(level=log_level_map[args.log_level.upper()], format='%(name)s:%(levelname)s: %(message)s')
+    litellm.suppress_debug_info = True
+    logging.getLogger("LiteLLM").setLevel(logging.ERROR)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
-    # Initialize the LLM based on selected model
     llm = get_model(args.model)
     
-    # Determine which evaluations to run
     if args.evals:
         eval_dirs = args.evals
         logger.info(f"Running specific evaluations: {', '.join(eval_dirs)}")
@@ -131,7 +131,6 @@ if __name__ == "__main__":
         eval_dirs = ["math", "translation", "script_edit_append", "script_edit_overwrite", "script_edit_modify"]
         logger.info("Running all evaluations")
     
-    # Run the specified evaluations
     for eval_dir in eval_dirs:
         try:
             run_eval(eval_dir, llm)
