@@ -9,8 +9,8 @@ import importlib.util
 import sys
 import logging
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+# Get a logger instance for this module
+logger = logging.getLogger(__name__)
 
 def get_placeholders_from_template(template):
     """Extract placeholders from a prompt template string"""
@@ -54,7 +54,7 @@ def run_eval(eval_dir, llm):
     # Run the test
     prompt = ChatPromptTemplate.from_template(prompt_template)
     prompt_with_filled_placeholders = prompt.format_messages(**placeholders)
-    logging.debug(f"Prompt with filled placeholders: {prompt_with_filled_placeholders}")
+    logger.debug(f"Prompt with filled placeholders: {prompt_with_filled_placeholders}")
     response = llm.invoke(prompt_with_filled_placeholders)
     
     # Strip whitespace before comparison
@@ -64,7 +64,7 @@ def run_eval(eval_dir, llm):
     assert expected_output in response_content, (
         f"Expected '{expected_output}' to be in '{response_content}', but it wasn't"
     )
-    logging.info(f"✅ {eval_dir} passed")
+    logger.info(f"✅ {eval_dir} passed")
 
 # Add directory to Python path
 sys.path.append(str(Path(__file__).parent))
@@ -104,23 +104,36 @@ if __name__ == "__main__":
                       default='mythomax', help='Model to use for evaluation')
     parser.add_argument('--evals', nargs='*', default=[], 
                       help='Specific evaluations to run (leave empty to run all)')
+    parser.add_argument('--log-level', type=str, default='INFO',
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        help='Set the logging level (e.g., DEBUG, INFO)')
     args = parser.parse_args()
     
+    # Set the logging level based on the argument
+    log_level_map = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL
+    }
+    logging.basicConfig(level=log_level_map[args.log_level.upper()], format='%(levelname)s: %(message)s')
+
     # Initialize the LLM based on selected model
     llm = get_model(args.model)
     
     # Determine which evaluations to run
     if args.evals:
         eval_dirs = args.evals
-        logging.info(f"Running specific evaluations: {', '.join(eval_dirs)}")
+        logger.info(f"Running specific evaluations: {', '.join(eval_dirs)}")
     else:
         eval_dirs = ["math", "translation", "script_edit_append", "script_edit_overwrite", "script_edit_modify"]
-        logging.info("Running all evaluations")
+        logger.info("Running all evaluations")
     
     # Run the specified evaluations
     for eval_dir in eval_dirs:
         try:
             run_eval(eval_dir, llm)
         except AssertionError as e:
-            logging.error(f"❌ {eval_dir} failed: {str(e)}")
+            logger.error(f"❌ {eval_dir} failed: {str(e)}")
 
