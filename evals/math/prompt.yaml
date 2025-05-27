@@ -1,0 +1,4 @@
+prompt_path: prompt.txt
+question: "2 + 2"
+expected_output: |
+  4
