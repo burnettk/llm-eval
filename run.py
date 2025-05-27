@@ -88,10 +88,7 @@ def get_model(model_name):
         return "openrouter/deepseek/deepseek-r1-distill-qwen-32b"
     else:
         # For other models, ensure they are prefixed for OpenRouter
-        if model_name.startswith("openrouter/"):
-            return model_name
-        else:
-            return f"openrouter/{model_name}"
+        return model_name
 
 def execute_script(script_path):
     """Execute a script and return the module"""
