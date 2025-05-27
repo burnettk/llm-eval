@@ -1,0 +1,5 @@
+prompt_template: "Translate this to French: {text}"
+text: "Hello world" # This 'text' key matches the placeholder {text} in the template
+
+expected_output: |
+  Bonjour le monde
