@@ -101,6 +101,11 @@ def execute_script(script_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run evaluations with different models')
+
+    # fast models:
+    # gemini/gemini-1.5-flash-8b
+    # gemini/gemini-2.0-flash-exp
+    # gemini/gemini-2.0-flash-lite
     parser.add_argument('--model', type=str,
                       default='gemini/gemini-1.5-flash-8b-exp-0924', help='Model to use for evaluation')
     parser.add_argument('--evals', nargs='*', default=[], 
