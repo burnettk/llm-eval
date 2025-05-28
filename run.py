@@ -1,8 +1,6 @@
-import litellm # Import the main litellm module
+import litellm
 from litellm import completion as litellm_completion
-import os
 import yaml
-import json
 from pathlib import Path
 import argparse
 import importlib.util
