@@ -22,16 +22,14 @@ def get_placeholders_from_template(template):
                 placeholders.add(placeholder)
     return placeholders
 
-def run_eval(eval_dir, llm):
-    """Run evaluation for a specific directory"""
-    eval_path = Path(f"evals/{eval_dir}")
-    
+def load_and_validate_prompt(eval_dir, eval_path):
+    """Load and validate the prompt configuration and template."""
     # Load prompt configuration
     with open(eval_path / "prompt.yaml") as f:
         prompt_config = yaml.safe_load(f)
     
     # Extract placeholders from prompt.yaml
-    placeholders = {key: value for key, value in prompt_config.items() if key != "expected_output" and key != "prompt_path" and key != "prompt_template"}
+    placeholders = {key: value for key, value in prompt_config.items() if key not in ["expected_output", "prompt_path", "prompt_template"]}
     
     # Get prompt template from either prompt_path or prompt_template
     if "prompt_path" in prompt_config:
@@ -48,27 +46,36 @@ def run_eval(eval_dir, llm):
     missing = expected_placeholders - set(placeholders.keys())
     if missing:
         raise ValueError(f"Missing required placeholders in {eval_dir}: {', '.join(missing)}")
+    
+    return prompt_config, prompt_template, placeholders
+
+def run_llm_and_assert(llm, llm_messages, expected_output):
+    """Run the LLM and assert the response."""
+    response = litellm_completion(model=llm, messages=llm_messages)
+    
+    # Strip whitespace before comparison
+    response_content = response.choices[0].message.content.strip()
+    
+    assert expected_output.strip() in response_content, (
+        f"Expected '{expected_output.strip()}' to be in '{response_content}', but it wasn't"
+    )
+
+def run_eval(eval_dir, llm):
+    """Run evaluation for a specific directory"""
+    eval_path = Path(f"evals/{eval_dir}")
+    
+    prompt_config, prompt_template, placeholders = load_and_validate_prompt(eval_dir, eval_path)
 
     # Format the prompt content
     formatted_content = prompt_template.format(**placeholders)
     
     # Prepare messages for LiteLLM
-    # Assuming all prompts are single user messages based on current structure
     llm_messages = [{"role": "user", "content": formatted_content}]
     logger.debug(f"Messages for LiteLLM: {llm_messages}")
 
-    # Run the test using LiteLLM
-    # The 'llm' variable (model_name string) is passed to LiteLLM.
-    response = litellm_completion(model=llm, messages=llm_messages)
+    # Run the test using LiteLLM and assert the response
+    run_llm_and_assert(llm, llm_messages, prompt_config["expected_output"])
     
-    # Strip whitespace before comparison
-    expected_output = prompt_config["expected_output"].strip()
-    # LiteLLM response structure: response.choices[0].message.content
-    response_content = response.choices[0].message.content.strip()
-    
-    assert expected_output in response_content, (
-        f"Expected '{expected_output}' to be in '{response_content}', but it wasn't"
-    )
     logger.info(f"✅ {eval_dir} passed")
 
 # Add directory to Python path
@@ -85,8 +92,11 @@ def get_model(model_name):
     elif model_name == "deepseek":
         # Specific alias mapping
         return "openrouter/deepseek/deepseek-r1-distill-qwen-32b"
+    elif "/" not in model_name:
+        # For other models, if no provider is specified, assume OpenRouter
+        return f"openrouter/{model_name}"
     else:
-        # For other models, ensure they are prefixed for OpenRouter
+        # For other models that have a provider, pass them as is
         return model_name
 
 def execute_script(script_path):
@@ -97,13 +107,15 @@ def execute_script(script_path):
     spec.loader.exec_module(module)
     return module
 
-if __name__ == "__main__":
+def main():
+    """Main function to run the evaluations."""
     parser = argparse.ArgumentParser(description='Run evaluations with different models')
 
     # fast models:
     # gemini/gemini-1.5-flash-8b
     # gemini/gemini-2.0-flash-exp
     # gemini/gemini-2.0-flash-lite
+    # gemini/gemini-2.5-pro-preview-03-25
     parser.add_argument('--model', type=str,
                       default='gemini/gemini-1.5-flash-8b-exp-0924', help='Model to use for evaluation')
     parser.add_argument('--evals', nargs='*', default=[], 
@@ -113,14 +125,7 @@ if __name__ == "__main__":
                         help='Set the logging level (e.g., DEBUG, INFO)')
     args = parser.parse_args()
     
-    log_level_map = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
-    logging.basicConfig(level=log_level_map[args.log_level.upper()], format='%(name)s:%(levelname)s: %(message)s')
+    logging.basicConfig(level=logging.getLevelName(args.log_level.upper()), format='%(name)s:%(levelname)s: %(message)s')
     litellm.suppress_debug_info = True
     logging.getLogger("LiteLLM").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -131,7 +136,9 @@ if __name__ == "__main__":
         eval_dirs = args.evals
         logger.info(f"Running specific evaluations: {', '.join(eval_dirs)}")
     else:
-        eval_dirs = ["math", "translation", "script_edit_append", "script_edit_overwrite", "script_edit_modify"]
+        # Scan the evals directory for all available evaluations
+        evals_path = Path("evals")
+        eval_dirs = [d.name for d in evals_path.iterdir() if d.is_dir()]
         logger.info("Running all evaluations")
     
     for eval_dir in eval_dirs:
@@ -139,4 +146,7 @@ if __name__ == "__main__":
             run_eval(eval_dir, llm)
         except AssertionError as e:
             logger.error(f"❌ {eval_dir} failed: {str(e)}")
+
+if __name__ == "__main__":
+    main()
 
