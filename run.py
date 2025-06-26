@@ -6,30 +6,27 @@ import argparse
 import importlib.util
 import sys
 import logging
+import re
 
 # Get a logger instance for this module
 logger = logging.getLogger(__name__)
 
 def get_placeholders_from_template(template):
     """Extract placeholders from a prompt template string"""
-    placeholders = set()
-    # Split on curly braces and look for variable names
-    parts = template.split('{')
-    for part in parts:
-        if '}' in part:
-            placeholder = part.split('}')[0].strip()
-            if placeholder:
-                placeholders.add(placeholder)
-    return placeholders
+    # Use regex to find all placeholders in the format {placeholder}
+    return set(re.findall(r'\{([^}]+)\}', template))
 
 def load_and_validate_prompt(eval_dir, eval_path):
     """Load and validate the prompt configuration and template."""
     # Load prompt configuration
     with open(eval_path / "prompt.yaml") as f:
         prompt_config = yaml.safe_load(f)
+
+    # Define reserved keys that are not placeholders
+    reserved_keys = {"expected_output", "prompt_path", "prompt_template"}
     
-    # Extract placeholders from prompt.yaml
-    placeholders = {key: value for key, value in prompt_config.items() if key not in ["expected_output", "prompt_path", "prompt_template"]}
+    # Extract placeholders from prompt.yaml by excluding reserved keys
+    placeholders = {key: value for key, value in prompt_config.items() if key not in reserved_keys}
     
     # Get prompt template from either prompt_path or prompt_template
     if "prompt_path" in prompt_config:
@@ -41,9 +38,11 @@ def load_and_validate_prompt(eval_dir, eval_path):
     else:
         raise ValueError(f"Neither prompt_path nor prompt_template found in {eval_dir}/prompt.yaml")
     
-    # Validate placeholders
+    # Validate that all placeholders in the template are provided
     expected_placeholders = get_placeholders_from_template(prompt_template)
-    missing = expected_placeholders - set(placeholders.keys())
+    provided_placeholders = set(placeholders.keys())
+    
+    missing = expected_placeholders - provided_placeholders
     if missing:
         raise ValueError(f"Missing required placeholders in {eval_dir}: {', '.join(missing)}")
     
@@ -86,18 +85,20 @@ sys.path.append(str(Path(__file__).parent))
 def get_model(model_name):
     """Get the appropriate model name for LiteLLM, ensuring OpenRouter prefix."""
     # OPENROUTER_API_KEY environment variable is used by LiteLLM for OpenRouter.
-    if model_name == "mythomax":
-        # Specific alias mapping
-        return "openrouter/gryphe/mythomax-l2-13b"
-    elif model_name == "deepseek":
-        # Specific alias mapping
-        return "openrouter/deepseek/deepseek-r1-distill-qwen-32b"
-    elif "/" not in model_name:
+    model_aliases = {
+        "mythomax": "openrouter/gryphe/mythomax-l2-13b",
+        "deepseek": "openrouter/deepseek/deepseek-r1-distill-qwen-32b",
+    }
+    
+    if model_name in model_aliases:
+        return model_aliases[model_name]
+    
+    if "/" not in model_name:
         # For other models, if no provider is specified, assume OpenRouter
         return f"openrouter/{model_name}"
-    else:
-        # For other models that have a provider, pass them as is
-        return model_name
+    
+    # For other models that have a provider, pass them as is
+    return model_name
 
 def execute_script(script_path):
     """Execute a script and return the module"""
